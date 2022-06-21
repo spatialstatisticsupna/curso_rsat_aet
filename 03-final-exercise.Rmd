@@ -132,7 +132,7 @@ redModified = function(red, swir2){
   swir2 <- terra::stretch(swir2, 1, 4)
   out <- terra::stretch(red, 0, 255)
   return(out*swir2)
-
+}
 ```
 
 ```{r eval=FALSE, echo=FALSE, message=FALSE}
