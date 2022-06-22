@@ -407,7 +407,9 @@ rsat_download(july6.records, out.dir=out.dir)
 
 ## Searching a region from scratch
 
-The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. \### `raster` package The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
+The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. 
+### `raster` package 
+The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
 library(raster)
