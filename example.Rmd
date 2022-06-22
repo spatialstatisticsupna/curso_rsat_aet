@@ -81,15 +81,9 @@ Once we have chosen the dates to include in the study we can proceed to filter t
 
 ```{r eval=FALSE, echo=FALSE, message=FALSE}
 
+dtes <- as.Date(c("2021-09-20", "2021-09-30", "2021-10-10" ))
+
 rcds <- records(volcano)
-dtes <- c(as.Date("2021-09-10"),
-          as.Date("2021-09-15"),
-          as.Date("2021-09-20"),
-          as.Date("2021-09-25"),
-          as.Date("2021-09-30"),
-          as.Date("2021-10-05"),
-          as.Date("2021-10-10"),
-          as.Date("2021-10-15"))
 rcds.f <- rcds[dates(rcds) %in% dtes]
 records(volcano) <- rcds.f
 
@@ -103,7 +97,7 @@ rsat_download(volcano)
 
 ```{r eval=FALSE, echo=FALSE, message=FALSE}
 
-rsat_mosaic(volcano)
+rsat_mosaic(volcano, fbands=c("B02_60m", "B02_60m", "B04_60m", "B12_60m"))
 
 ```
 
