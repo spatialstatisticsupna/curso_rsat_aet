@@ -4,7 +4,7 @@ We will use `rsat` for a simple task. In this example we will take a look at sat
 
 In order to start using the package we will need to load the library and set the credentials.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 library(rsat)
 
@@ -17,7 +17,7 @@ set_credentials("", "")
 
 Now that the package is loaded and configured, the next step is to create the `rtoi`. First, we have to choose an area for the study we want to carry out, in our case the island of La Palma. We could use a shape file delimiting the area, but for this example we will use a quicker and easier approach. We can use the `mapview` and `mapedit` libraries to load an interactive map and select an area within the map. Please select the area corresponding the La Palma island with a polygon, it does not does not have to be exact, a rough outline is sufficient.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 library(mapview)
 library(mapedit)
@@ -29,7 +29,7 @@ palma <- mapview() %>% editMap()
 
 At this moment we have a variable called `palma` that contains the area we have selected as a `polygon` and a lot of metadata that does not interest us. `rsat` works with `sf` objects for defining the area of interest, this means that we have to extract the parameters that interests us from the variable and convert it to an `sf` object.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 palma <- st_as_sf(palma[[1]])
 
@@ -37,7 +37,7 @@ palma <- st_as_sf(palma[[1]])
 
 With the area as an `sf` object we can finally create the `rtoi` object. But before creating the `rtoi` we have to define a place to store it and the path to the *database* that will contain the downloaded files. For this example we already provide a *database* folder with the images to speed up the download process. Once those variables are defined we can proceed to the creation of the `rtoi`. At this moment we can give a name to the `rtoi`, this name will be used to create the folder that stores it and to load it at a latter date.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 rtoi.path <- file.path("")
 db.path <- file.path("")
@@ -55,7 +55,7 @@ Once we have the `rtoi` created we can start the process of searching for images
 
 The most basic search function, `rsat_search` takes 3 parameters: an `rtoi` object, a satellite product and a time period. For our example we will use Sentinel-2 images, so we will set the product to *S2MSI2A*.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 toi<-as.Date("2021-09-10")+0:60
 
@@ -65,9 +65,9 @@ rsat_search(volcano, "S2MSI2A", dates=toi)
 
 ## Filtering the `records` and downloading
 
-We have created a set of `records` for our area and time of interest, but now we have to check which of those records we want to download. We can use the plot preview functionality for obtaining previews of the records to filter the ones that most interest us. When previewing we have to specify a `dates` variable with the dates we want to include in the preview, in order to better see the plotted previews it is better to use small subsets of the time of interest.
+We have created a set of `records` for our area and time of interest, but now we have to check which of those records we want to download. We can use the `plot` *preview* mode for obtaining previews of the records to filter the ones that most interest us. When previewing we have to specify a `dates` variable with the dates we want to include in the preview, in order to better see the plotted previews it is better to use small subsets of the time of interest.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 plot(volcano, 
      "preview",
@@ -77,9 +77,9 @@ plot(volcano,
 
 ```
 
-Once we have chosen the dates to include in the study we can proceed to filter them in the `records` for the `rtoi`.
+Once we have chosen the dates to include in the study we can proceed to filter them in the `records` for the `rtoi`. First we define a set of dates we are interested in, we have already specified three different dates. With the dates chosen we select the `records` that contain those dates and update the `rtoi` with the `records` from those dates.
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
 dtes <- as.Date(c("2021-09-20", "2021-09-30", "2021-10-10" ))
 
@@ -89,65 +89,94 @@ records(volcano) <- rcds.f
 
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+The next step is to download the images corresponding to the `records` that are defined in the `rtoi`. Before starting a download we have to be sure that we have already filtered the needed `records`, since `rsat` will simply try to download everything.
+
+```{r eval=FALSE, message=FALSE}
 
 rsat_download(volcano)
 
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+Once the download process has finished we have a file for each of the `records`, but we are interested in working over an area and not the individual image files. For this we have the `mosaic` function. This function will stitch together images belonging to a single date and crop the resulting image to the desired area. Giving us a smaller and simpler file to work with. We can also define a subset of the bands we want to use for the stitching. In this exercise we are only interested in the *RGB* and the *SWIR2* band. For sentinel we have the following correspondence:
 
-rsat_mosaic(volcano, fbands=c("B02_60m", "B02_60m", "B04_60m", "B12_60m"))
+| Name  | Sentinel-2 | Resolution |
+|-------|------------|------------|
+| red   | B04        | 10, 20, 60 |
+| green | B03        | 10, 20, 60 |
+| blue  | B02        | 10, 20, 60 |
+| SWIR2 | B12        | 20, 60     |
+
+We also have different spatial resolution for the bands, for this example we will use the 60m resolution to work with smaller files.
+
+```{r eval=FALSE, message=FALSE}
+
+bands <- c("B02_60m", "B03_60m", "B04_60m", "B12_60m")
+
+rsat_mosaic(volcano, fbands=bands)
 
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+We can check the newly created images with the `plot` function, using the *view* option. Now we can see how the different records have been merged and trimmed to show only the area of interest.
+
+```{r eval=FALSE, message=FALSE}
 
 plot(volcano, 
      "view",
      tm.polygon.region.border.col="red",
      product="S2MSI2A",
-     dates=c(as.Date("2021-09-10"),as.Date("2021-09-30")))
+     dates=dtes)
 
 ```
 
 ## Deriving variables
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+Now that we have all our images downloaded and the `rtoi` with information we can start playing with the bands. Using the `rsat_list_data` function we can check what bands are inside the `rtoi`. Here we see how the newly created mosaics are included in the `rtoi`.
 
-create histogram of the nir band to find threshold
+```{r eval=FALSE, message=FALSE}
+
+rsat_list_data(volcano)
 
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+We want to use the infrared band to modify our *RGB* bands to show the lava flow for the volcano. First we have to check the normal values of the *SWIR2* band and filter those out  
+
+```{r eval=FALSE, message=FALSE}
+
+swir <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B12_60")
+terra::density(swir)
+
+
+```
+
+```{r eval=FALSE, message=FALSE}
+
+threshold <- 10000
 
 redModified = function(red, swir2){
-  swir2[swir2<10000] = 0
+  swir2[swir2<threshold] = 0
   swir2 <- terra::stretch(swir2, 1, 4)
   out <- terra::stretch(red, 0, 255)
   return(out*swir2)
 }
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
-rsat_derive(myRtoi, product = "S2MSI2A", variable = "redModified", fun = redModified)
-
-```
-
-Do not use the blue and green modified variables, load the bands from the rtoi get any band in rtoi list available data rsat_list_data(pamplona.derived) select band 1: MODIS_Grid_500m_2D_sur_refl_b01_1 mod.ndvi.rast \<- rsat_get_SpatRaster(pamplona.derived, "mod09ga", "MODIS_Grid_500m_2D_sur_refl_b01_1")
-
-```{r eval=FALSE, echo=FALSE, message=FALSE}
-
-red <- rsat_get_SpatRaster(myRtoi, "S2MSI2A", "redModified")
-blue <- rsat_get_SpatRaster(myRtoi, "S2MSI2A", "blueModified")
-green <- rsat_get_SpatRaster(myRtoi, "S2MSI2A", "greenModified")
+rsat_derive(volcano, product = "S2MSI2A", variable = "redModified", fun = redModified)
 
 ```
 
-```{r eval=FALSE, echo=FALSE, message=FALSE}
+```{r eval=FALSE, message=FALSE}
 
-rgb<-c(red,green,blue)
+red <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified"))
+blue <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60"))
+green <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60"))
+
+```
+
+```{r eval=FALSE, message=FALSE}
+
+rgb<-c(red[[2]],green[[2]],blue[[2]])
 plotRGB(stretch(rgb,0,255,minq=0, maxq=0.80))
 
 ```
