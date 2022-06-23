@@ -18,8 +18,7 @@ The records class is designed to work on quadrants. However, we usually need mor
 
 In the R environment, `rtoi` is a special object of R cataloged as an S6 object. The `rtoi` behaves like an object in any programming language that follows the object-oriented paradigm. This means that if we introduce the `rtoi` inside a function, and the information of the `rtoi` is modified, that change updates the main R environment.
 
-![The 3 parts of rtoi](imgs/rtoi_structure.png){width="322"}
-## Basic `rtoi` functions
+![The 3 parts of rtoi](imgs/rtoi_structure.png){width="322"} \## Basic `rtoi` functions
 
 We will use the Madrid region as a reference. The objective will be to get one cloud-free image of Madrid from Landsat-8 and Sentinel-2. We will start by defining the region and dates for the study.
 
@@ -73,7 +72,9 @@ dir.create("./DATABASE",showWarnings = FALSE)
 madrid <-new_rtoi("madrid",madrid.sf,"./regions","./DATABASE")
 print(madrid)
 ```
+
 The `rtoi` is empty at this point, we need to start by searching records for the region of Madrid in 2020.
+
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 search.dates <- as.Date("2020-01-01") + 0:365
 
@@ -183,8 +184,7 @@ print(madrid)
 
 This split object structure allows to have a common repository of images (the database) that is shared by several people. This folder can be shared on a NAS server, so that a whole workgroup can save time in downloading images.
 
-![2 people working with the same database](imgs/rtoi_db.png)
-## Basic processing
+![2 people working with the same database](imgs/rtoi_db.png) \## Basic processing
 
 We will move forward and explain how to transform raw images into useful information. Specifically, Section \@ref(basic-mosaic) describes the mosaicking, a simple operation to improve the organization of the data set. Section \@ref(basic-index) describes the index calculation, i.e. how simple math applied to bands improve the analysis of earth system's distribution and dynamics. Finally, Section \@ref(basic-cloud), explores how to locate and remove cloudy pixels to avoid misinterpreting the surface reflectance.
 
@@ -324,7 +324,12 @@ A nice feature of `rsat` is that the indexes can specify the bands by their name
 
 ```{r basic_variables}
 show_variables()
-rsat_list_data(filomena) # execute on console to see table
+d.list <- rsat_list_data(filomena)
+# unlist to visualize
+for (c in 1:ncol(d.list) ) {
+  d.list[,c] <- unlist(d.list[,c])
+}
+d.list
 ```
 
 To use the `NDSI` function over the series of satellite images from the Iberian peninsula type;
@@ -394,6 +399,7 @@ tm_shape(snow.spain) + tm_raster(style = "cont")
 ```
 
 `rsat` package also allows us to fill missing values in images.
+
 ```{r basic_ndsi_IMA}
 rsat_smoothing_images(snow.spain,"IMA")
 ```
