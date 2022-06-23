@@ -370,7 +370,7 @@ In MODIS, cloud-masks have a different resolution than the multispectral image. 
 
 ![Resampling the resolution to a finer scale using the nearest neighbor method](imgs/resample.PNG "Resampling the resolution to a finer scale using the nearest neighbor method")
 
-```{r basic_mask_resample}
+```{r basic_mask_resample, error=FALSE}
 clds.msk <- resample(clds.msk, ndsi.img, method = "near")
 ```
 
