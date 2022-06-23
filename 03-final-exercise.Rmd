@@ -35,12 +35,13 @@ palma <- st_as_sf(palma[[1]])
 
 ```
 
-With the area as an `sf` object we can finally create the `rtoi` object. But before creating the `rtoi` we have to define a place to store it and the path to the *database* that will contain the downloaded files. For this example we already provide a *database* folder with the images to speed up the download process. Once those variables are defined we can proceed to the creation of the `rtoi`. At this moment we can give a name to the `rtoi`, this name will be used to create the folder that stores it and to load it at a latter date.
+With the area as an `sf` object we can finally create the `rtoi` object. But before creating the `rtoi` we have to define a place to store it and the path to the *database* that will contain the downloaded files. For this example we already provide a *database* folder with the images to speed up the download process. Once those paths are defined we can proceed to the creation of the `rtoi` with the `new_rtoi` function. This function takes three parameter, the first one is the name, this name will be used to create the folder that stores it and to load it at a latter date. The second parameter is the region as an `sf` object. Finally the last parameter is the path to a folder.
 
 ```{r eval=FALSE, message=FALSE}
 
-rtoi.path <- file.path("E:/regions")
-set_database("Z:/CarpetasPersonales/ugaitz/DATABASE")
+set_database("/home/ugaitz.amozarrain/DB2")
+rtoi.path <- file.path("/home/ugaitz.amozarrain/regions")
+
 volcano <- new_rtoi("volcano",
                     palma,
                     rtoi.path)
@@ -109,7 +110,7 @@ We also have different spatial resolution for the bands, for this example we wil
 
 bands <- c("B02_60m", "B03_60m", "B04_60m", "B12_60m")
 
-rsat_mosaic(volcano, fbands=bands)
+rsat_mosaic(volcano, bfilter=bands)
 
 ```
 
@@ -135,7 +136,7 @@ rsat_list_data(volcano)
 
 ```
 
-We want to use the infrared band to modify our *RGB* bands to show the lava flow for the volcano. First we have to check the normal values of the *SWIR2* band and filter those out
+We want to use the infrared band to modify our *RGB* bands to show the lava flow for the volcano. First we have to check the normal values of the *SWIR2* band and filter those out. We can use an histogram, a density plot or any other method to check which values in the raster are higher than normal. In order to load the raster we have to use the `rsat_get_SpatRaster` function that takes the `rtoi` object, the *product* and the band we want to *load*.
 
 ```{r eval=FALSE, message=FALSE}
 
@@ -145,6 +146,10 @@ terra::density(swir)
 
 ```
 
+Now that we have obtained the normal values for the infrared band, we can create a function used to *derive* a new variable. This function will take the *red* and *swir2* bands and return a new raster that contains the values of the *red* band with modifications made with the information of the *swir2* band. `rsat` knows the names of the bands used by each product, if we use *red* and *swir2* as parameter for the deriving function, `rsat` will translate them to *B04* and *B12*.
+
+For this function first we have to set any values that are lower than a threshold to 0. Then we can stretch the values of the raster between 1 and another low number so that finally we can multiply the *red* band with the modified *swir2* band.
+
 ```{r eval=FALSE, message=FALSE}
 
 threshold <- 10000
@@ -152,28 +157,33 @@ threshold <- 10000
 redModified = function(red, swir2){
   swir2[swir2<threshold] = 0
   swir2 <- terra::stretch(swir2, 1, 4)
-  out <- terra::stretch(red, 0, 255)
-  return(out*swir2)
+  return(red*swir2)
 }
 ```
 
+Once we have the function defined we can call `rsat_derive` to create this new variable. This function takes the `rtoi`, a product string, the variable name, and finally the function to apply. If we are testing the results, we might also want to set the *overwrite* parameter to `TRUE`.
+
 ```{r eval=FALSE, message=FALSE}
 
-rsat_derive(volcano, product = "S2MSI2A", variable = "redModified", fun = redModified)
+rsat_derive(volcano, product = "S2MSI2A", variable = "redModified", fun = redModified, overwrite=TRUE)
 
 ```
+
+Once we have created the new variable, we can use it as a band. In order to load it we would use the `rsat_get_SpatRaster` function, but instead of using the band name we specify the variable name defined earlier. We will also load the blue and green bands to use them together to create an RGB image.
 
 ```{r eval=FALSE, message=FALSE}
 
 red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
-blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60")
 green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60")
+blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60")
 
 ```
+
+Finally we will create a variable that contains a `spatRaster` with the three color bands. The `red`, `green` and `blue`  variables defined earlier contain 3 rasters each, one for each of the *mosaic* images, we will have to extract one from each of the variables to create the new `spatRaster`. The order in which the variables are joined is important, follow the red, green, blue order. Finally we can call `terra::plotRGB` from the package `terra` to create the plot. In order to improve the visibility on the map we can `terra::stretch` the raster using the `maxq` parameter to filter a percentage of the values.
 
 ```{r eval=FALSE, message=FALSE}
 
 rgb<-c(red[[2]],green[[2]],blue[[2]])
-terra::plotRGB(stretch(rgb,0,255,minq=0, maxq=0.80))
+terra::plotRGB(terra::stretch(rgb,0,255,minq=0, maxq=0.80))
 
 ```
