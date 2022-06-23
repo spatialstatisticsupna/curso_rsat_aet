@@ -15,7 +15,7 @@ set_credentials("rgistools", "EspacialUPNA88")
 
 ## Creating the `rtoi`
 
-Now that the package is loaded and configured, the next step is to create the `rtoi`. First, we have to choose an area for the study we want to carry out, in our case the island of La Palma. We could use a shape file delimiting the area, but for this example we will use a quicker and easier approach. We can use the `mapview` and `mapedit` libraries to load an interactive map and select an area within the map. Please select the area corresponding the La Palma island with a polygon, it does not does not have to be exact, a rough outline is sufficient.
+Now that the package is loaded and configured, the next step is to create the `rtoi`. First, we have to choose an area for the study we want to carry out, in our case the island of La Palma. We could use a shape file delimiting the area, but for this example we will use a quicker and easier approach. We can use the `mapview` and `mapedit` libraries to load an interactive map and select an area within the map. Please select the area corresponding the La Palma island with a polygon (use the *draw a polygon* option), it does not have to be exact, a rough outline is sufficient.
 
 ```{r eval=FALSE, message=FALSE}
 
@@ -179,7 +179,7 @@ blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60")
 
 ```
 
-Finally we will create a variable that contains a `spatRaster` with the three color bands. The `red`, `green` and `blue`  variables defined earlier contain 3 rasters each, one for each of the *mosaic* images, we will have to extract one from each of the variables to create the new `spatRaster`. The order in which the variables are joined is important, follow the red, green, blue order. Finally we can call `terra::plotRGB` from the package `terra` to create the plot. In order to improve the visibility on the map we can `terra::stretch` the raster using the `maxq` parameter to filter a percentage of the values.
+Finally we will create a variable that contains a `spatRaster` with the three color bands. The `red`, `green` and `blue` variables defined earlier contain 3 rasters each, one for each of the *mosaic* images, we will have to extract one from each of the variables to create the new `spatRaster`. The order in which the variables are joined is important, follow the red, green, blue order. Finally we can call `terra::plotRGB` from the package `terra` to create the plot. In order to improve the visibility on the map we can `terra::stretch` the raster using the `maxq` parameter to filter a percentage of the values.
 
 ```{r eval=FALSE, message=FALSE}
 
