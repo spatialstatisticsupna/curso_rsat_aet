@@ -227,8 +227,8 @@ The polygon specifies a ***Coordinate Reference System (CRS)***. The CRS helps i
 Remember that an `rtoi` requires two paths; one for itself (`rt.path`) and another for its parental database (`db.path`):
 
 ```{r basic_paths}
-db.path <- "./DATABASE"
-rtoi.path <- "./regions"
+db.path <- "D:/curso_rsat_aet/DATABASE"
+rtoi.path <- "D:/curso_rsat_aet/regions"
 dir.create(db.path, recursive = TRUE, showWarnings = FALSE)
 dir.create(rtoi.path, recursive = TRUE, showWarnings = FALSE)
 ```
@@ -303,14 +303,6 @@ rsat_mosaic(filomena)
 
 #### Definition
 
-For any given material, the *reflectance* (remember the concept in Section \@ref(theory-images)) vary with the wavelength. Plotting wavelength vs. reflectance describes a characteristic curve that is specific for each material. The curve is called ***spectral signature***. For instance, green vegetation absorbs red light due to chlorophyll and reflects *near-infrared* (*NIR*) due to structural tissues. This translates into lower reflectance values on the red band and higher reflectance values on the *NIR* band.
-
-<center>
-
-![Spectral signature of several materials (different colors).](imgs/spectral_signature.png "Spectral signature of several materials."){width="470"}
-
-\<\center\>
-
 A ***remote sensing index*** is the result of simple math applied to the bands of an image to reveal the presence of a material. The computation involves the bands with a distinctively high or low reflectance. Over the years, researchers have developed a wide variety of indexes for different materials or processes which can be consulted [here](https://www.indexdatabase.de/db/i.php).
 
 For instance, the *Normalized Difference Snow Index* (NDSI) (see e.g., [@ndsi2004]) highlights the snow using the *green* and *shortwave-infrared* bands (around $1.5 \mu m$). The subtraction of this two bands gives a large number for those pixels with snow. The denominator ensures that values oscillate between $-1$ and $1$.
@@ -344,7 +336,8 @@ rsat_derive(filomena, product = "mod09ga", variable = "ndsi", fun = NDSI)
 Import the results into `R` using the `rsat_get_raster()` function. The numbers must be truncated between $-1$ and $1$ to avoid values outside the feasible range (sun reflections on mirror-like surfaces, such as water, can lead to misleading results):
 
 ```{r basic_ndsi_import}
-ndsi.img <- rsat_get_raster(filomena, p = "mod09ga", v = "ndsi")
+library(raster)
+ndsi.img <- rsat_get_SpatRaster(filomena, p = "mod09ga", v = "ndsi")
 ndsi.img <- clamp(ndsi.img, -1, 1)
 ```
 
@@ -359,7 +352,7 @@ The *NDSI* index improves the separability between clouds and snow. However, the
 
 ### Deleting cloud-covered pixels
 
-Some data providers apply algorithms over their data-sets to detect the presence of clouds (Level 1/2 products). The analysis is part of the quality assessment done during pre-processing and the results are included in the ***Quality Assurance*** (*QA*) band of the image. In addition to cloud coverage, the band provides information about over-saturated or filled pixels. The information is packed in this band using the bit format.
+Some data providers apply algorithms over their data-sets to detect the presence of clouds (Level 1/2 products). The analysis is part of the quality assessment done during pre-processing and the results are included in the ***Quality Assesment*** (*QA*) band of the image. In addition to cloud coverage, the band provides information about over-saturated or filled pixels. The information is packed in this band using the bit format.
 
 The function `rsat_cloudMask()` interprets the *QA* band to obtain images showing the presence/absence of clouds. Its application is straightforward;
 
@@ -370,7 +363,7 @@ rsat_cloudMask(filomena)
 For every image in the `rtoi`, the function generates a new image, called ***mask***, in which $1$s and $NA$s indicate clear and covered pixels. The function identifies the mission/program and applies the appropriate interpretation of bits to create the cloud mask. To import the result run;
 
 ```{r basic_mask}
-clds.msk <- rsat_get_raster(filomena, "mod09ga", "CloudMask")
+clds.msk <- rsat_get_SpatRaster(filomena, "mod09ga", "CloudMask")
 ```
 
 In MODIS, cloud-masks have a different resolution than the multispectral image. To adjust the resolution, *resample* the image (`resample()`) using the nearest neighbor method (`"ngb"`).
@@ -378,7 +371,7 @@ In MODIS, cloud-masks have a different resolution than the multispectral image. 
 ![Resampling the resolution to a finer scale using the nearest neighbor method](imgs/resample.PNG "Resampling the resolution to a finer scale using the nearest neighbor method")
 
 ```{r basic_mask_resample}
-clds.msk <- resample(clds.msk, ndsi.img, method = "ngb")
+clds.msk <- resample(clds.msk, ndsi.img, method = "near")
 ```
 
 To apply the cloud mask, we just multiply both series of pixels. Dot multiplications are performed pixel-wise. *NDSI* values multiplied by $1$ remain unaltered but those multiplied by $NA$ become missing:
@@ -391,11 +384,16 @@ names(ndsi.filt) <- names(clds.msk) # keep the names
 As an attempt to obtain a ***composite image***, we extract maximum value of the *NDSI* for each pixel in the time series. Maximum value compositions are frequent in this field [@mvc1986]. Compositing is as a way to summarize the information in a time-lapse and ignore the presence of clouds:
 
 ```{r basic_composite}
-snow.spain <- calc(ndsi.filt, max, na.rm = TRUE)
+snow.spain <- terra::app(ndsi.filt, max, na.rm = TRUE)
 ```
 
 Represent the results;
 
 ```{r basic_ndsi_map}
 tm_shape(snow.spain) + tm_raster(style = "cont")
+```
+
+`rsat` package also allows us to fill missing values in images.
+```{r basic_ndsi_IMA}
+rsat_smoothing_images(snow.spain,"IMA")
 ```
