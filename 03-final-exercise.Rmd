@@ -8,7 +8,7 @@ In order to start using the package we will need to load the library and set the
 
 library(rsat)
 
-set_credentials("", "")
+set_credentials("rgistools", "EspacialUPNA88")
 
 
 ```
@@ -39,13 +39,11 @@ With the area as an `sf` object we can finally create the `rtoi` object. But bef
 
 ```{r eval=FALSE, message=FALSE}
 
-rtoi.path <- file.path("")
-db.path <- file.path("")
-
+rtoi.path <- file.path("E:/regions")
+set_database("Z:/CarpetasPersonales/ugaitz/DATABASE")
 volcano <- new_rtoi("volcano",
                     palma,
-                    rtoi.path,
-                    db.path)
+                    rtoi.path)
 
 ```
 
@@ -71,7 +69,6 @@ We have created a set of `records` for our area and time of interest, but now we
 
 plot(volcano, 
      "preview",
-     tm.polygon.region.border.col="red",
      product="S2MSI2A",
      dates=toi[0:20])
 
@@ -138,7 +135,7 @@ rsat_list_data(volcano)
 
 ```
 
-We want to use the infrared band to modify our *RGB* bands to show the lava flow for the volcano. First we have to check the normal values of the *SWIR2* band and filter those out  
+We want to use the infrared band to modify our *RGB* bands to show the lava flow for the volcano. First we have to check the normal values of the *SWIR2* band and filter those out
 
 ```{r eval=FALSE, message=FALSE}
 
@@ -168,15 +165,15 @@ rsat_derive(volcano, product = "S2MSI2A", variable = "redModified", fun = redMod
 
 ```{r eval=FALSE, message=FALSE}
 
-red <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified"))
-blue <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60"))
-green <- as.list(rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60"))
+red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
+blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60")
+green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60")
 
 ```
 
 ```{r eval=FALSE, message=FALSE}
 
 rgb<-c(red[[2]],green[[2]],blue[[2]])
-plotRGB(stretch(rgb,0,255,minq=0, maxq=0.80))
+terra::plotRGB(stretch(rgb,0,255,minq=0, maxq=0.80))
 
 ```
