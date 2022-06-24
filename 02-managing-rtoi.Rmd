@@ -69,10 +69,14 @@ To create an `rtoi` object, we must provide 4 arguments to the function `new_rto
 4.  `db_path`: the path where the images will be stored in their original form.
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-base.dir <- getwd()
-dir.create("./regions",showWarnings = FALSE)
-dir.create("./DATABASE",showWarnings = FALSE)
-madrid <-new_rtoi("madrid",madrid.sf,"./regions","./DATABASE")
+wd <- getwd()
+regions.dir <- file.path(wd,"regions")
+database.dir <- file.path(wd,"DATABASE")
+dir.create(regions.dir,showWarnings = FALSE)
+dir.create(database.dir,showWarnings = FALSE)
+
+madrid <-new_rtoi("madrid",madrid.sf,regions.dir)
+set_database(database.dir)
 print(madrid)
 ```
 
@@ -104,7 +108,7 @@ Additionally the rtoi object generates more folders to store the processed versi
 Every time we make a change on the rtoi, in addition to all the R sessions, the change has repercussions on the stored folder. This means that if at any time the R session is broken, the information is kept up to date. To be able to load the `rtoi` object again, you must use the function `read_rtoi`. This function only needs the address where the `rtoi` is located.
 
 ```{r, echo=FALSE, cache.path="cache/"}
-madrid <- read_rtoi("./regions/madrid")
+madrid <- read_rtoi(file.path(regions.dir,"madrid"))
 print(madrid)
 ```
 
@@ -115,9 +119,8 @@ The plot function is much more sophisticated in `rtoi`. It has several options. 
 To do this, we must provide the string `"preview"` as a second argument along with the dates. You can also specify the product to display.
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-print(madrid)
 # very slow
-# plot(madrid,"preview",dates=dates(madrid)[1:9],product="S2MSI2A",compass.rm=T)
+plot(madrid,"preview",dates=dates(madrid)[1:9],product="S2MSI2A",compass.rm=T)
 plot(madrid,"preview",dates=dates(madrid)[1:9],product="LANDSAT_8_C1",compass.rm=T)
 ```
 
@@ -138,9 +141,9 @@ madrid.landsat8 <- subset(records(madrid),"Landsat-8",subset = "sat")
 madrid.sentinel2 <- subset(records(madrid),"Sentinel-2",subset = "sat")
 
 madrid.landsat8.match <- madrid.landsat8[dates(madrid.landsat8) %in% dates(madrid.sentinel2)]
-sentinel2.match <- madrid.sentinel2[dates(madrid.sentinel2) %in% dates(madrid.landsat8.match)]
+madrid.sentinel2.match <- madrid.sentinel2[dates(madrid.sentinel2) %in% dates(madrid.landsat8.match)]
 
-records(madrid)<-c(madrid.landsat8.match,sentinel2.match)
+records(madrid)<-c(madrid.landsat8.match,madrid.sentinel2.match)
 plot(madrid,"preview",dates=dates(madrid)[1:4],product="LANDSAT_8_C1")
 ```
 
@@ -168,9 +171,8 @@ plot(madrid,"preview")
 The download of the images with rtoi can be done with the `rsat_download` function. The images will be stored in the `rtoi` `db_path` address.
 
 ```{r, eval=FALSE, cache=TRUE, cache.path="cache/"}
-print(madrid)
+# DO NOT RUN
 rsat_download(madrid)
-print(madrid)
 ```
 
 ## From DATABASE to `rtoi`
@@ -178,9 +180,8 @@ print(madrid)
 The `rtoi` object consists of three parts, the database address, the object loaded in R and the folder with all the processed data of the region of interest. The three parts are related to each other. When we download images, they are stored in the database, but the `rtoi` folder is still empty (it only has meta data). However, when we run the mosaic function, the image information is extracted from the database and processed to generate a single image from the region of interest.
 
 ```{r, eval=FALSE, cache=TRUE, cache.path="cache/"}
-print(madrid)
+# DO NOT RUN
 rsat_mosaic(madrid)
-print(madrid)
 ```
 
 ### Working together
@@ -232,16 +233,17 @@ The polygon specifies a ***Coordinate Reference System (CRS)***. The CRS helps i
 Remember that an `rtoi` requires two paths; one for itself (`rt.path`) and another for its parental database (`db.path`):
 
 ```{r basic_paths}
-db.path <- "D:/curso_rsat_aet/DATABASE"
-rtoi.path <- "D:/curso_rsat_aet/regions"
-dir.create(db.path, recursive = TRUE, showWarnings = FALSE)
-dir.create(rtoi.path, recursive = TRUE, showWarnings = FALSE)
+wd <- getwd()
+regions.dir <- file.path(wd,"regions")
+database.dir <- file.path(wd,"DATABASE")
+dir.create(database.dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(regions.dir, recursive = TRUE, showWarnings = FALSE)
 ```
 
 Then, create a new `rtoi` using the previous information:
 
 ```{r basic_rtoi}
-filomena <- new_rtoi("filomena", roi, rtoi.path, db.path)
+filomena <- new_rtoi("filomena", roi, regions.dir, database.dir)
 ```
 
 #### Search
@@ -304,7 +306,7 @@ rsat_mosaic(filomena)
 
 #### Definition
 
-A ***remote sensing index*** is the result of simple math applied to the bands of an image to reveal the presence of a material. The computation involves the bands with a distinctively high or low reflectance. Over the years, researchers have developed a wide variety of indexes for different materials or processes which can be consulted [here](https://www.indexdatabase.de/db/i.php).
+A ***remote sensing index*** is the result of simple math applied to the bands of an image to reveal the presence of a material. Over the years, researchers have developed a wide variety of indexes for different materials or processes which can be consulted [here](https://www.indexdatabase.de/db/i.php).
 
 For instance, the *Normalized Difference Snow Index* (NDSI) (see e.g., [@ndsi2004]) highlights the snow using the *green* and *shortwave-infrared* bands (around $1.5 \mu m$). The subtraction of this two bands gives a large number for those pixels with snow. The denominator ensures that values oscillate between $-1$ and $1$.
 
@@ -332,12 +334,12 @@ To use the `NDSI` function over the series of satellite images from the Iberian 
 
 ```{r basic_derive}
 rsat_derive(filomena, product = "mod09ga", variable = "ndsi", fun = NDSI)
+rsat_list_data(filomena)
 ```
 
-Import the results into `R` using the `rsat_get_raster()` function. The numbers must be truncated between $-1$ and $1$ to avoid values outside the feasible range (sun reflections on mirror-like surfaces, such as water, can lead to misleading results):
+Import the results into `R` using the `rsat_get_SpatRaster()` function. The numbers must be truncated between $-1$ and $1$ to avoid values outside the feasible range (sun reflections on mirror-like surfaces, such as water, can lead to misleading results):
 
 ```{r basic_ndsi_import}
-library(raster)
 ndsi.img <- rsat_get_SpatRaster(filomena, p = "mod09ga", v = "ndsi")
 ndsi.img <- clamp(ndsi.img, -1, 1)
 ```
@@ -394,8 +396,9 @@ Represent the results;
 tm_shape(snow.spain) + tm_raster(style = "cont")
 ```
 
-`rsat` package also allows us to fill missing values in images.
+`rsat` package also allows us to fill missing values in images. `rsat_smoothing_images` is the implementation of a spatio temporal method called image mean anomaly (IMA) for gap filling and smoothing satellite data (Militino et al. 2019).
 
 ```{r basic_ndsi_IMA}
+# DO NOT RUN
 rsat_smoothing_images(snow.spain,"IMA")
 ```
