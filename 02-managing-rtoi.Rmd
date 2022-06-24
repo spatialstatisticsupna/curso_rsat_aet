@@ -175,21 +175,6 @@ The download of the images with rtoi can be done with the `rsat_download` functi
 rsat_download(madrid)
 ```
 
-## From DATABASE to `rtoi`
-
-The `rtoi` object consists of three parts, the database address, the object loaded in R and the folder with all the processed data of the region of interest. The three parts are related to each other. When we download images, they are stored in the database, but the `rtoi` folder is still empty (it only has meta data). However, when we run the mosaic function, the image information is extracted from the database and processed to generate a single image from the region of interest.
-
-```{r, eval=FALSE, cache=TRUE, cache.path="cache/"}
-# DO NOT RUN
-rsat_mosaic(madrid)
-```
-
-### Working together
-
-This split object structure allows to have a common repository of images (the database) that is shared by several people. This folder can be shared on a NAS server, so that a whole workgroup can save time in downloading images.
-
-![2 people working with the same database](imgs/rtoi_db.png)
-
 ## Basic `rtoi` processing
 
 We will move forward and explain how to transform raw images into useful information. Specifically, Section \@ref(basic-mosaic) describes the mosaicking, a simple operation to improve the organization of the data set. Section \@ref(basic-index) describes the index calculation, i.e. how simple math applied to bands improve the analysis of earth system's distribution and dynamics. Finally, Section \@ref(basic-cloud), explores how to locate and remove cloudy pixels to avoid misinterpreting the surface reflectance.
@@ -285,8 +270,6 @@ The final step of the review is the download of the satellite images:
 rsat_download(filomena)
 ```
 
-------------------------------------------------------------------------
-
 ### Mosaic {#basic-mosaic}
 
 Tiles sometimes extend way beyond our area of interest. Also, It may happen that several tiles intersect with our region of interest, that is, separate files contain fragments of the region under analysis with information of the same dates (see the picture below).
@@ -300,7 +283,11 @@ rsat_mosaic(filomena)
 
 ```
 
-------------------------------------------------------------------------
+#### Working together
+
+This split object structure allows to have a common repository of images (the database) that is shared by several people. This folder can be shared on a NAS server, so that a whole workgroup can save time in downloading images.
+
+![2 people working with the same database](imgs/rtoi_db.png)
 
 ### Derive {#basic-index}
 
@@ -348,6 +335,7 @@ Let's display one of the results:
 
 ```{r basic_ndsi_plot}
 library(tmap)
+tmap_mode("plot")
 tm_shape(ndsi.img[[1]]) + tm_raster(style = "cont")
 ```
 
