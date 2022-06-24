@@ -151,28 +151,6 @@ Information collected from satellites is saved in repositories which can be free
 
 -   **EarthExplorer**: [\<https://ers.cr.usgs.gov/register\>](https://ers.cr.usgs.gov/register){.uri}
 
-### Credentials
-
-Two functions in `rsat` help us handling the *usernames* and *passwords* for the various APIs; `set_credentials()` and `print_credentials()`*.* The function `set_credentials()` indicates to `rsat` which `username` (first argument) and `password` (second argument) should be used for which `service` (third argument). The code below assigns to `scihub` our personal *username* and *password* :
-
-```{r, cache = TRUE, cache.path="cache/"}
-library(rsat)
-set_credentials("rsat.package","UpnaSSG.2021","scihub")
-```
-
-The function `print_credentials()` displays on all the *usernames* and *passwords* required in `rsat` to gain full access to products handled by `rsat`. Undefined credentials remain empty (`""`):
-
-```{r, cache = TRUE, cache.path="cache/"}
-print_credentials()
-```
-
-If *usernames* and *passwords* are the same for all web services (our advice), we can set all of them with a single instruction :
-
-```{r echo=FALSE}
-# set API credentials
-set_credentials("rsat.package", "UpnaSSG.2021")
-```
-
 #### Demo #1: MODIS download using the EarthExplorer portal
 
 Web services offer online portals to request remote sensing products via *Graphical User Interfaces (GUI)*. We will conduct a small demonstration using *EarthExplorer's* GUI to find MODIS images covering Navarre between `03/05/2019` and `05/05/2019`. In our jargon, Navarre is referred to as ***Region of Interest (ROI)*** and the time-span is our ***Time of Interest (TOI)***.
@@ -190,6 +168,43 @@ Web services offer online portals to request remote sensing products via *Graphi
     ![](imgs/ee_modis_navarre3.gif)
 
 Data portals are straightforward and intuitive. However, they can be tedious when requesting images for longer periods of time or several data products. In these situations, `rsat` becomes handy. The package enables you to send requests from `R` to the appropriate web service easily and programatically using *Application Programming Interfaces (APIs)*. You can judge in the next section where the same example is repeated using `rsat`.
+
+#### \`rsat\`: Quick walkthrough
+
+In this section, we repeat the previous demo but this time using `rsat`. The aim is to have an overview of the package's workflow and show how downloading satellite images can be acomplished with a few lines of code. The process is very similar to the online portal; (1) specify *username* and *password*, (2) define the *ROI* and *TOI,* (3) search, and (4) download the search results.
+
+```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
+library(rsat)
+
+# replace with your own "username" and "password"
+set_credentials("username", "password")
+
+# region and time of interest: rtoi
+roi <- ex.navarre
+toi <- as.Date("2020-01-11")
+rtp <- tempdir()
+
+set_database(file.path(tempdir(), "DATABASE"))
+
+navarre <- new_rtoi("Navarre", roi, rtp)
+
+# search, acquire, customize, and process
+rsat_search(region = navarre, product = "mod09ga", dates = toi)
+rsat_download(navarre)
+rsat_mosaic(navarre, overwrite = TRUE)
+
+rsat_derive(navarre, 
+            product = "mod09ga", 
+            variable = "NDVI")
+
+# plot the results
+plot(navarre, "view" , 
+      product = "mod09ga", 
+      variable = "NDVI", 
+      breaks = seq(0, 1, 0.1))
+      
+plot(navarre,"dates")
+```
 
 # Tinkering with satellite records - standardizing and filtering image metadata.
 
@@ -238,12 +253,29 @@ Creating a `records` variable from scratch is a hard job, it is necessary to kno
 
 The easiest way to create a `records` class is using `rsat_search` function. This function is able to call to different APIs to get satellite metadata as `records`.
 
-```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-library(rsat)
+### Credentials
 
+Two functions in `rsat` help us handling the *usernames* and *passwords* for the various APIs; `set_credentials()` and `print_credentials()`*.* The function `set_credentials()` indicates to `rsat` which `username` (first argument) and `password` (second argument) should be used for which `service` (third argument). The code below assigns to `scihub` our personal *username* and *password* :
+
+```{r, cache = TRUE, cache.path="cache/"}
+library(rsat)
+set_credentials("rsat.package","UpnaSSG.2021","scihub")
+```
+
+The function `print_credentials()` displays on all the *usernames* and *passwords* required in `rsat` to gain full access to products handled by `rsat`. Undefined credentials remain empty (`""`):
+
+```{r, cache = TRUE, cache.path="cache/"}
+print_credentials()
+```
+
+If *usernames* and *passwords* are the same for all web services (our advice), we can set all of them with a single instruction :
+
+```{r echo=FALSE}
 # set API credentials
 set_credentials("rsat.package", "UpnaSSG.2021")
 ```
+
+### Create records
 
 `rsat_search` function takes some parameters for searching satellite records from multiple APIs. It needs at least an spatial region, the product and a date interval. The region is defined with a spatial feature (`sf`) and the time with `Date` class.
 
@@ -268,22 +300,27 @@ The main benefit of using this package for managing satellite imagery is that it
 
 `records` class takes the R vector object as reference. `vector` class provides simple but powerful operations such as `c`, `subset`, `length`, `print`, etc.
 
-```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-#TODO vector use in R
-```
-
-**Exercise:** without using the function `as.Date` create an R vector that contains the dates that appear at least 2 times in `my.dates1`, `my.dates2` and `my.dates3`.
-
-1.  How many dates are the 3 dates variables?
+1.  Compute the union, intersection, and contains operation with dates.
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 my.dates1 <- as.Date("2020-01-01") + 0:31
 my.dates2 <- as.Date("2020-02-01") + 0:29
 my.dates3 <- as.Date("2020-03-01") + 0:31
 
-#TODO complete the exercise here
+# union my.dates1,my.dates2,my.dates
+all.dates <- unique(c(my.dates1,my.dates2,my.dates3))
 
-c(my.dates1[length(my.dates1)],my.dates2[length(my.dates2)])
+# contains
+my.dates1 %in% my.dates2
+# intersection my.dates1, my.dates2
+my.dates1[my.dates1 %in% my.dates2]
+
+# length all dates
+length(c(my.dates1,my.dates2,my.dates3))
+
+# length all dates union
+length(all.dates)
+
 ```
 
 The `records` class uses the same functions to manage the images before the download.
@@ -316,16 +353,6 @@ plot(search.records[1:5],
      tm.polygon.region.alpha=1,
      compass.rm=T,
      scale.bar.rm=T)
-```
-
-![Landsat and Sentinel-2 constellation capture based on orbit](imgs/orbit_landsat-sentinel.gif "Landsat with Sentinel - Global Coverage"){width="682"}
-
-#### Exercise
-
-Select and plot 5 cloud-free images from `search.records` in manhattan.
-
-```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-#TODO complete the exercise here
 ```
 
 ## Filtering `records` before the download
@@ -407,9 +434,7 @@ rsat_download(july6.records, out.dir=out.dir)
 
 ## Searching a region from scratch
 
-The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. 
-### `raster` package 
-The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
+The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. \### `raster` package The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
 library(raster)
