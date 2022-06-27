@@ -33,8 +33,8 @@ At this moment we have a variable called `palma` that contains the area we have 
 
 ```{r eval=FALSE, message=FALSE}
 
-#TODO convert to sf
-palma <- 
+#TODO conver to sf
+palma <- st_as_sf(palma[[1]])
 
 ```
 
@@ -48,7 +48,9 @@ set_database("Z:/DATABASE")
 rtoi.path <- file.path(getwd(), "regions")
 
 #TODO create rtoi
-volcano <- 
+volcano <- new_rtoi("volcano",
+                    palma,
+                    rtoi.path)
 
 ```
 
@@ -61,10 +63,10 @@ The search function, `rsat_search` takes 3 parameters: an `rtoi` object, a produ
 ```{r eval=FALSE, message=FALSE}
 
 #TODO define time of interest
-toi <-
+toi<-as.Date("2021-09-10")+0:60
 
 #TODO search sentinel-2
-
+rsat_search(volcano, "S2MSI2A", dates=toi)
 
 ```
 
@@ -75,7 +77,10 @@ We have created a set of `records` for our area and time of interest, but now we
 ```{r eval=FALSE, message=FALSE}
 
 #TODO plot preview
-
+plot(volcano, 
+     "preview",
+     product="S2MSI2A",
+     dates=toi[20:60])
 
 ```
 
@@ -86,7 +91,9 @@ Once we have checked the images, for clouds or any other problem, we can choose 
 dtes <- as.Date(c("2021-09-20", "2021-09-30", "2021-10-10" ))
 
 #TODO choose records from dtes
-
+rcds <- records(volcano)
+rcds.f <- rcds[dates(rcds) %in% dtes]
+records(volcano) <- rcds.f
 
 #Check that the dates are correct
 dates(volcano)
@@ -97,7 +104,7 @@ The next step is to download the images corresponding to the `records` that are 
 ```{r eval=FALSE, message=FALSE}
 
 #TODO download
-
+rsat_download(volcano)
 
 ```
 
@@ -118,7 +125,7 @@ bands <- c("B02", "B03", "B04", "B12")
 bands <- paste0(bands, "_60m")
 
 #TODO mosaic
-
+rsat_mosaic(volcano, bfilter=bands)
 
 ```
 
@@ -127,7 +134,11 @@ We can check the newly created images with the `plot` function, using the *view*
 ```{r eval=FALSE, message=FALSE}
 
 #TODO plot
-
+plot(volcano, 
+     "view",
+     tm.polygon.region.border.col="red",
+     product="S2MSI2A",
+     dates=dtes)
 
 ```
 
@@ -146,8 +157,7 @@ Since we want to see the lava flow of the volcano, we will use the infrared band
 ```{r eval=FALSE, message=FALSE}
 
 #TODO load raster for band B12_60m
-swir <- 
-  
+swir <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B12_60m")
 terra::density(swir)
 
 
@@ -173,7 +183,11 @@ Once we have the function defined we can call `rsat_derive` to create this new v
 ```{r eval=FALSE, message=FALSE}
 
 #TODO derive
-
+rsat_derive(volcano, 
+            product = "S2MSI2A", 
+            variable = "redModified", 
+            fun = redModified, 
+            overwrite = TRUE)
 
 rsat_list_data(volcano)
 ```
@@ -185,8 +199,8 @@ Once we have created the new variable, we can use it as any other band. In order
 green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60m")
 
 #TODO load red and blue bands
-red <- 
-blue <- 
+red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
+blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60m")
 
 ```
 

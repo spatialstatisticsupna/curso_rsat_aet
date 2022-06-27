@@ -265,7 +265,7 @@ set_credentials("rsat.package", "UpnaSSG.2021")
 data("ex.manhattan")
 plot(ex.manhattan)
 class(ex.manhattan)
-toi <- as.Date("2020-01-01") + 0:385
+toi <- as.Date("2020-01-01") + 0:365
 ```
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
@@ -295,10 +295,18 @@ names(search.records[1:2])
 ### Plotting and previewing records
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 12dfbafeb49ad628edc091a3515d6e0e6bfe3b67
 library(tmap)
 
+<<<<<<< HEAD
 plot(search.records[1])+tm_shape(ex.manhattan)+tm_polygons(col="grey", border.col="red")
 
+=======
+>>>>>>> 12dfbafeb49ad628edc091a3515d6e0e6bfe3b67
 plot(search.records[1:5],
      region=ex.manhattan,
      tm.polygon.region.border.col="red",
@@ -402,17 +410,27 @@ plot(c(landsat8.july6,sentinel2.july6),
 The download is done the same as with the `rtoi` class, using `rsat_download` function.
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
+<<<<<<< HEAD
+=======
+out.dir="Z:/DATABASE"
+>>>>>>> 12dfbafeb49ad628edc091a3515d6e0e6bfe3b67
 july6.records <- c(landsat8.july6, sentinel2.july6)
 rsat_download(july6.records)
 ```
 
 ## Searching a region from scratch
 
+<<<<<<< HEAD
 The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch.
 
 ### `raster` package
 
 The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
+=======
+The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. 
+
+### `raster` package The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
+>>>>>>> 12dfbafeb49ad628edc091a3515d6e0e6bfe3b67
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
 library(raster)
