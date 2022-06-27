@@ -93,16 +93,6 @@ Tiling systems differ among programs/missions:
 
 -   **MODIS:** Divides the earth according to the [Sinusoidal tile grid system](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html). Tiles are identified based on their horizontal and vertical location in a regular grid. Here also the numbers increase from East to West and North to South**.**
 
-The tiling systems mentioned above are available as polygons in `rsatExtra`. These polygons can be loaded and used to check the overlap between the *ROI* and the tiles. Let's display the sinusoidal tile grid system from MODIS;
-
-```{r, fig.align='center', fig.cap = "MODIS Tiling system",eval=FALSE}
-library(rsatExtra)
-library(tmap)
-data("modis_tiles")
-tmap_mode('view')
-tm_shape(modis_tiles) + tm_polygons(alpha = 0, border.col = "red")
-```
-
 #### Product characteristics
 
 The orbit and sensors of satellites/constellations provide images of different resolutions (in its broadest sense). Here, the term ***resolution*** refers to the level of detail in some aspect of the image:
@@ -171,13 +161,13 @@ Data portals are straightforward and intuitive. However, they can be tedious whe
 
 #### \`rsat\`: Quick walkthrough
 
-In this section, we repeat the previous demo but this time using `rsat`. The aim is to have an overview of the package's workflow and show how downloading satellite images can be acomplished with a few lines of code. The process is very similar to the online portal; (1) specify *username* and *password*, (2) define the *ROI* and *TOI,* (3) search, and (4) download the search results.
+In this section, we repeat the previous demo but this time using `rsat`. The aim is to have an overview of the package's workflow and show how downloading satellite images can be accomplished with a few lines of code. The process is very similar to the online portal; (1) specify *username* and *password*, (2) define the *ROI* and *TOI,* (3) search, and (4) download the search results.
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 library(rsat)
 
 # replace with your own "username" and "password"
-set_credentials("username", "password")
+set_credentials("rsat.package","UpnaSSG.2021")
 
 # region and time of interest: rtoi
 roi <- ex.navarre
@@ -438,7 +428,7 @@ The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packag
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
 library(raster)
-spain<-getData('GADM', country='Spain',path="D:/rsat/CursoRSAT/countries",level=2)
+spain<-getData('GADM', country='Spain',level=2)
 plot(spain)
 ```
 
@@ -473,7 +463,7 @@ Once with translate from `sp` to `sf` we can use `rsat_search` as we use in the 
 galicia.records <- rsat_search(region = galicia,
                               product = "LANDSAT_8_C1",
                               dates = as.Date("2020-01-01")+c(0,15))
-plot(galicia.records[2], region=galicia, tm.polygon.region.border.col="red")
+plot(galicia.records[1:4], region=galicia, tm.polygon.region.border.col="red")
 ```
 
 ## Exercise
