@@ -39,12 +39,12 @@ palma <- st_as_sf(palma[[1]])
 
 With the area as an `sf` object we can finally create the `rtoi` object. But before creating the `rtoi` we have to define a place to store it, and the path to the *database* that will contain the downloaded files. For this example we already provide a *database* folder with the images to speed up the download process.
 
-Once those paths are defined we can proceed to the creation of the `rtoi` with the `new_rtoi` function. This function takes three parameter, the first one is the name, this name will be used to create the folder that stores it and to load it at a latter date. The second parameter is the region as an `sf` object. Finally, the last parameter is the path to a folder to store the newly created \`rtoi\`\`.
+Once those paths are defined we can proceed to the creation of the `rtoi` with the `new_rtoi` function. This function takes three parameter, the first one is the name, this name will be used to create the folder that stores it and to load it at a latter date. The second parameter is the region as an `sf` object. Finally, the last parameter is the path to a folder to store the newly created `rtoi`.
 
 ```{r eval=FALSE, message=FALSE}
 
-set_database("/home/ugaitz.amozarrain/DB2")
-rtoi.path <- file.path("/home/ugaitz.amozarrain/regions")
+set_database("Z:\DATABASE")
+rtoi.path <- file.path(getwd())
 
 volcano <- new_rtoi("volcano",
                     palma,
@@ -145,7 +145,7 @@ Since we want to see the lava flow of the volcano, we will use the infrared band
 
 ```{r eval=FALSE, message=FALSE}
 
-swir <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B12_60")
+swir <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B12_60m")
 terra::density(swir)
 
 
@@ -183,8 +183,8 @@ Once we have created the new variable, we can use it as any other band. In order
 ```{r eval=FALSE, message=FALSE}
 
 red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
-green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60")
-blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60")
+green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60m")
+blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60m")
 
 ```
 
