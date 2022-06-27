@@ -74,7 +74,7 @@ To create an `rtoi` object, we must provide 4 arguments to the function `new_rto
 wd <- getwd()
 regions.dir <- file.path(wd,"regions")
 # database path, shared, in C:/ as an example
-database.dir <- file.path("C:/DATABASE")
+database.dir <- file.path("Z:/DATABASE")
 
 dir.create(regions.dir,showWarnings = FALSE)
 dir.create(database.dir,showWarnings = FALSE)
@@ -114,7 +114,7 @@ To do this, we must provide the string `"preview"` as a second argument along wi
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 first9dates <- sort(dates(madrid))[1:9]; first9dates
-# very slow
+
 plot(madrid,"preview",dates=first9dates,product="S2MSI2A",compass.rm=T)
 plot(madrid,"preview",dates=first9dates,product="LANDSAT_8_C1",compass.rm=T)
 ```
@@ -219,7 +219,7 @@ Remember that an `rtoi` requires two paths; one for itself (`rt.path`) and anoth
 ```{r basic_paths}
 wd <- getwd()
 regions.dir <- file.path(wd,"regions")
-database.dir <- file.path("C:/DATABASE")
+database.dir <- file.path("Z:/DATABASE")
 dir.create(database.dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(regions.dir, recursive = TRUE, showWarnings = FALSE)
 ```
@@ -329,8 +329,8 @@ rsat_list_data(filomena)
 Import the results into `R` using the `rsat_get_raster()` function. The numbers must be truncated between $-1$ and $1$ to avoid values outside the feasible range (sun reflections on mirror-like surfaces, such as water, can lead to misleading results):
 
 ```{r basic_ndsi_import}
-ndsi.img <- rsat_get_raster(filomena, p = "mod09ga", v = "ndsi")
-ndsi.img <- raster::clamp(ndsi.img, -1, 1)
+ndsi.img <- rsat_get_SpatRaster(filomena, p = "mod09ga", v = "ndsi")
+ndsi.img <- terra::clamp(ndsi.img, -1, 1)
 ```
 
 Let's display one of the results:
@@ -354,15 +354,15 @@ rsat_cloudMask(filomena)
 For every image in the `rtoi`, the function generates a new image, called ***mask***, in which $1$s and $NA$s indicate clear and covered pixels. The function identifies the mission/program and applies the appropriate interpretation of bits to create the cloud mask. To import the result run;
 
 ```{r basic_mask}
-clds.msk <- rsat_get_raster(filomena, p = "mod09ga", v = "CloudMask")
+clds.msk <- rsat_get_SpatRaster(filomena, p = "mod09ga", v = "CloudMask")
 ```
 
-In MODIS, cloud-masks have a different resolution than the multispectral image. To adjust the resolution, *resample* the image (`resample()`) using the nearest neighbor method (`"ngb"`).
+In MODIS, cloud-masks have a different resolution than the multispectral image. To adjust the resolution, *resample* the image (`resample()`) using the nearest neighbor method (`"near"`).
 
 ![Resampling the resolution to a finer scale using the nearest neighbor method](imgs/resample.PNG "Resampling the resolution to a finer scale using the nearest neighbor method")
 
 ```{r basic_mask_resample, error=FALSE}
-clds.msk <- raster::resample(clds.msk, ndsi.img, method = "ngb")
+clds.msk <- terra::resample(clds.msk, ndsi.img, method = "near")
 ```
 
 To apply the cloud mask, we just multiply both series of pixels. Dot multiplications are performed pixel-wise. *NDSI* values multiplied by $1$ remain unaltered but those multiplied by $NA$ become missing:
@@ -375,7 +375,7 @@ names(ndsi.filt) <- names(clds.msk) # keep the names
 As an attempt to obtain a ***composite image***, we extract maximum value of the *NDSI* for each pixel in the time series. Maximum value compositions are frequent in this field [@mvc1986]. Compositing is as a way to summarize the information in a time-lapse and ignore the presence of clouds:
 
 ```{r basic_composite}
-snow.spain <- calc(ndsi.filt, max, na.rm = TRUE)
+snow.spain <- terra::app(ndsi.filt, max, na.rm = TRUE)
 ```
 
 Represent the results;
