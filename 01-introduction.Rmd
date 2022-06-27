@@ -2,13 +2,11 @@
 ---
 ---
 
-The aim of this document is to show how to handle **multispectral imagery** in `R` from major **publicly-available data archives**. These materials teach you the basic/intermediate concepts to retrieve, manage, and process satellite images locally (in your computer) in a simple and effective manner with `rsat`. The package is intended to deal with time series of satellite images from various sources in a standardized, semi-automated, and efficient manner. `rsat` replaces `RGISTools`, our previous package ($\sim 7500$ downloads), with a simpler, more efficient, and extended workflow. Materials are organized as follows:
+The aim of this document is to show how to handle **multispectral imagery** in `R` from major **publicly-available data archives**. These materials teach you the basic/intermediate concepts to retrieve, manage, and process satellite images locally (in your computer) in a simple and effective manner with `rsat`. The package is intended to deal with time series of satellite images from various sources in a standardized, semi-automated, and efficient manner. `rsat` replaces `RGISTools`, our previous package ($\sim 17000$ downloads), with a simpler, more efficient, and extended workflow. Materials are organized as follows:
 
 i.  **Introduction** - theory about multispectral images, data types and their organization.
-ii. **Tinkering with satellite `records`** - standardizing and filtering image metadata.
-iii. **Managing your `rtoi`** - building your region and time of interest.
-iv. **Basic processing** - customizing images for the objectives of the study.
-v.  **More advance processing** - completing and harmonizing multi-source data sets.
+ii. **Managing your `rtoi`** - building your region and time of interest.
+iii. **Final Exercise** - An example exercise with Cumbre Vieja
 
 ------------------------------------------------------------------------
 
@@ -69,7 +67,7 @@ Electromagnetic radiation can be described as a continuous ***spectrum*** of wav
 
 Multispectral images are freely available thanks to satellite ***programs*** supported by public agencies. The three major satellite programs are [Landsat](https://landsat.gsfc.nasa.gov/) (NASA/USGS), [MODIS](https://www.copernicus.eu/es) (NASA), and [Copernicus](https://www.copernicus.eu/es) (ESA).
 
-Programs can develop one or several ***missions*** and, for each mission, agencies launch one or multiple satellites to meat a particular goal (e.g., weather observation, land monitoring, sea-level surveillance). For instance, the Landsat program has carried out 8 missions so far (Landsat-1/8) and there is a 9th on the making (launch scheduled on spring 2021).
+Programs can develop one or several ***missions*** and, for each mission, agencies launch one or multiple satellites to meat a particular goal (e.g., weather observation, land monitoring, sea-level surveillance). For instance, the Landsat program has carried out 9 missions so far (Landsat-1/9) with the 9th mission having started publishing images this year.
 
 Missions are accomplished by ***satellites*** which carry specific ***sensors*** or instruments for the task. When several satellites are devoted to a single mission they are referred to as ***constellations***. For instance, the Terra and Aqua satellites from the constellation of the MODIS mission. A list of on-going governmental programs and their missions, satellites, and sensors can be found below.
 
@@ -87,21 +85,11 @@ Sensors scan the earth's surface in a continuous fashion. Data records are delib
 
 Tiling systems differ among programs/missions:
 
--   **Landsat 4-8:** The tiling system is the [*World Reference System 2*](https://landsat.gsfc.nasa.gov/about/worldwide-reference-system). Tiles are identified according to their path and row numbers which specify their location from East to West and North to South respectively.
+-   **Landsat 4-9:** The tiling system is the [*World Reference System 2*](https://landsat.gsfc.nasa.gov/about/worldwide-reference-system). Tiles are identified according to their path and row numbers which specify their location from East to West and North to South respectively.
 
 -   **Sentinel-2**: Uses the [Military Grid System](https://hls.gsfc.nasa.gov/wp-content/uploads/2016/03/MGRS_GZD-1.png). In this system, the earth's surface is divided into 60 vertical zones (UTM zones) and 20 horizontal zones. Vertical strata are designated by numbers increasing from East to West. Horizontal segments are represented by letters from South to North.
 
 -   **MODIS:** Divides the earth according to the [Sinusoidal tile grid system](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html). Tiles are identified based on their horizontal and vertical location in a regular grid. Here also the numbers increase from East to West and North to South**.**
-
-The tiling systems mentioned above are available as polygons in `rsatExtra`. These polygons can be loaded and used to check the overlap between the *ROI* and the tiles. Let's display the sinusoidal tile grid system from MODIS;
-
-```{r, fig.align='center', fig.cap = "MODIS Tiling system",eval=FALSE}
-library(rsatExtra)
-library(tmap)
-data("modis_tiles")
-tmap_mode('view')
-tm_shape(modis_tiles) + tm_polygons(alpha = 0, border.col = "red")
-```
 
 #### Product characteristics
 
@@ -113,9 +101,9 @@ The orbit and sensors of satellites/constellations provide images of different r
 
 -   The **spectral resolution** corresponds to the number of bands and their wavelength range. The MODIS sensor, with its $36$ bands in total, is the sensor with the highest spectral resolution.
 
-    ![Spectral bands for several satellte missions (Landsat 7/8, MODIS, Sentinel-2). Source: USGS](imgs/bands_missions.png "Spectral bands for several satellte missions (Landsat 7/8, MODIS, Sentinel-2). Source: USGS"){width="429"}
+    ![Spectral bands for several satellte missions (Landsat 7/8, MODIS, Sentinel-2). Source: USGS](imgs/bands_missions.png "Spectral bands for several satellte missions (Landsat 7/8, MODIS, Sentinel-2). Source: USGS"){width="596"}
 
-Selecting the right product depends on the objective of the study and the extension of the *ROI*. The features of different missions and satellites are collected into a single look-up table [here](https://drive.google.com/file/d/1cSw4LaTLPlGBHmG8v7uwH54f-m9jZz1N/view?usp=sharing). Web services
+Selecting the right product depends on the objective of the study and the extension of the *ROI*. The features of different missions and satellites are collected into a single look-up table [here](https://drive.google.com/file/d/1cSw4LaTLPlGBHmG8v7uwH54f-m9jZz1N/view?usp=sharing).
 
 #### Names
 
@@ -127,6 +115,7 @@ data <- "
   Program    | Mission    | Satellite | Sensor | ID             
   Landsat    | Landsat-7  | Landsat-7 | ETM    | LANDSAT_ETM_C1
   Landsat    | Landsat-8  | Landsat-8 | OLI    | LANDSAT_8_C1
+  Landsat    | Landsat-8  | Landsat-8 | OLI    | LANDSAT_ot_c2_l2
   MODIS      | MODIS      | Terra     | MODIS  | MOD09GA
   MODIS      | MODIS      | Aqua      | MODIS  | MYD09GA
   Copernicus | Sentinel-2 | 2A        | MSI    | S2MSI2A
@@ -171,20 +160,20 @@ Data portals are straightforward and intuitive. However, they can be tedious whe
 
 #### \`rsat\`: Quick walkthrough
 
-In this section, we repeat the previous demo but this time using `rsat`. The aim is to have an overview of the package's workflow and show how downloading satellite images can be acomplished with a few lines of code. The process is very similar to the online portal; (1) specify *username* and *password*, (2) define the *ROI* and *TOI,* (3) search, and (4) download the search results.
+In this section, we repeat the previous demo but this time using `rsat`. The aim is to have an overview of the package's workflow and show how downloading satellite images can be accomplished with a few lines of code. The process is very similar to the online portal; (1) specify *username* and *password*, (2) define the *ROI* and *TOI,* (3) search, and (4) download the search results.
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 library(rsat)
 
 # replace with your own "username" and "password"
-set_credentials("username", "password")
+set_credentials("rsat.package","UpnaSSG.2021")
 
 # region and time of interest: rtoi
 roi <- ex.navarre
 toi <- as.Date("2020-01-11")
 rtp <- tempdir()
 
-set_database(file.path(tempdir(), "DATABASE"))
+set_database("Z:/DATABASE")
 
 navarre <- new_rtoi("Navarre", roi, rtp)
 
@@ -193,17 +182,10 @@ rsat_search(region = navarre, product = "mod09ga", dates = toi)
 rsat_download(navarre)
 rsat_mosaic(navarre, overwrite = TRUE)
 
-rsat_derive(navarre, 
-            product = "mod09ga", 
-            variable = "NDVI")
-
 # plot the results
 plot(navarre, "view" , 
-      product = "mod09ga", 
-      variable = "NDVI", 
-      breaks = seq(0, 1, 0.1))
+      product = "mod09ga")
       
-plot(navarre,"dates")
 ```
 
 # Tinkering with satellite records - standardizing and filtering image metadata.
@@ -283,7 +265,7 @@ set_credentials("rsat.package", "UpnaSSG.2021")
 data("ex.manhattan")
 plot(ex.manhattan)
 class(ex.manhattan)
-toi <- as.Date("2020-01-01") + 0:385
+toi <- as.Date("2020-01-01") + 0:365
 ```
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
@@ -300,51 +282,23 @@ The main benefit of using this package for managing satellite imagery is that it
 
 `records` class takes the R vector object as reference. `vector` class provides simple but powerful operations such as `c`, `subset`, `length`, `print`, etc.
 
-1.  Compute the union, intersection, and contains operation with dates.
-
-```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-my.dates1 <- as.Date("2020-01-01") + 0:31
-my.dates2 <- as.Date("2020-02-01") + 0:29
-my.dates3 <- as.Date("2020-03-01") + 0:31
-
-# union my.dates1,my.dates2,my.dates
-all.dates <- unique(c(my.dates1,my.dates2,my.dates3))
-
-# contains
-my.dates1 %in% my.dates2
-# intersection my.dates1, my.dates2
-my.dates1[my.dates1 %in% my.dates2]
-
-# length all dates
-length(c(my.dates1,my.dates2,my.dates3))
-
-# length all dates union
-length(all.dates)
-
-```
-
-The `records` class uses the same functions to manage the images before the download.
-
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
 length(search.records)
 plot(search.records[1:2])
 ```
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-dates(search.records[1:10])
-names(search.records[1:10])
-print(search.records[1])
+dates(search.records[1:2])
+names(search.records[1:2])
 ```
 
 ### Plotting and previewing records
 
 ```{r, cache=TRUE ,eval=TRUE, cache.path="cache/"}
-plot(search.records[5])
+
 
 library(tmap)
 plot(search.records[5])+tm_shape(ex.manhattan)+tm_polygons(col="grey", border.col="red")
-
-#plot(search.records[1:5])+tm_shape(ex.manhattan)+tm_polygons(col="grey", border.col="red")
 
 plot(search.records[1:5],
      region=ex.manhattan,
@@ -353,6 +307,9 @@ plot(search.records[1:5],
      tm.polygon.region.alpha=1,
      compass.rm=T,
      scale.bar.rm=T)
+
+
+plot(search.records[5])
 ```
 
 ## Filtering `records` before the download
@@ -427,18 +384,20 @@ plot(c(landsat8.july6,sentinel2.july6))
 The download is done the same as with the `rtoi` class, using `rsat_download` function.
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
-out.dir="D:/CursoRSAT/DATABASE"
+out.dir="Z:/DATABASE"
 july6.records <- c(landsat8.july6, sentinel2.july6)
 rsat_download(july6.records, out.dir=out.dir)
 ```
 
 ## Searching a region from scratch
 
-The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. \### `raster` package The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
+The `rsat` package has been designed to match with `sf`, `raster`, `tmap` packages and create an ecosystem for satellite image processing. In this section we introduce an example of a download of region from scratch. 
+
+### `raster` package The package `raster` within its functions provides the access for all the world countries and regions. This function is `getData`. With this function we can get regions in spatial points (`sp`) class.
 
 ```{r, cache=FALSE ,eval=TRUE, cache.path="cache/"}
 library(raster)
-spain<-getData('GADM', country='Spain',path="D:/rsat/CursoRSAT/countries",level=2)
+spain<-getData('GADM', country='Spain',level=2)
 plot(spain)
 ```
 
@@ -473,7 +432,7 @@ Once with translate from `sp` to `sf` we can use `rsat_search` as we use in the 
 galicia.records <- rsat_search(region = galicia,
                               product = "LANDSAT_8_C1",
                               dates = as.Date("2020-01-01")+c(0,15))
-plot(galicia.records[2], region=galicia, tm.polygon.region.border.col="red")
+plot(galicia.records[1:4], region=galicia, tm.polygon.region.border.col="red")
 ```
 
 ## Exercise

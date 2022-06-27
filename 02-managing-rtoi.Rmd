@@ -6,7 +6,7 @@ Satellites capture images of the earth's surface from north to south. The captur
 
 The records class is designed to work on quadrants. However, we usually need more than one tile to cover the region of our analysis. The package implements the `rtoi` class to deal with regions.
 
-## What is an `rtoi`?
+## What is an `rtoi` (region and time of interest)?
 
 `rtoi` is the object designed to manage regions consisting of several tiles. The object is composed of 3 parts:
 
@@ -77,7 +77,6 @@ regions.dir <- file.path(wd,"regions")
 database.dir <- file.path("Z:/DATABASE")
 
 dir.create(regions.dir,showWarnings = FALSE)
-dir.create(database.dir,showWarnings = FALSE)
 
 madrid <-new_rtoi("madrid",madrid.sf,regions.dir)
 set_database(database.dir)
@@ -219,8 +218,7 @@ Remember that an `rtoi` requires two paths; one for itself (`rt.path`) and anoth
 ```{r basic_paths}
 wd <- getwd()
 regions.dir <- file.path(wd,"regions")
-database.dir <- file.path("Z:/DATABASE")
-dir.create(database.dir, recursive = TRUE, showWarnings = FALSE)
+
 dir.create(regions.dir, recursive = TRUE, showWarnings = FALSE)
 ```
 
@@ -343,11 +341,11 @@ The *NDSI* index improves the separability between clouds and snow. However, the
 
 ### Deleting cloud-covered pixels
 
-Some data providers apply algorithms over their data-sets to detect the presence of clouds (Level 1/2 products). The analysis is part of the quality assessment done during pre-processing and the results are included in the ***Quality Assesment*** (*QA*) band of the image. In addition to cloud coverage, the band provides information about over-saturated or filled pixels. The information is packed in this band using the bit format.
+Some data providers apply algorithms over their data-sets to detect the presence of clouds (Level 1/2 products). The analysis is part of the quality assessment done during pre-processing and the results are included in the ***Quality Assessment*** (*QA*) band of the image. In addition to cloud coverage, the band provides information about over-saturated or filled pixels. The information is packed in this band using the bit format.
 
 The function `rsat_cloudMask()` interprets the *QA* band to obtain images showing the presence/absence of clouds. Its application is straightforward;
 
-```{r basic_cloud}
+```{r basic_cloud, error = FALSE}
 rsat_cloudMask(filomena)
 ```
 
@@ -388,5 +386,13 @@ plot(snow.spain)
 
 ```{r basic_ndsi_IMA}
 # DO NOT RUN
-rsat_smoothing_images(ndsi.filt,"IMA")
+# rsat_smoothing_images(ndsi.filt,"IMA")
+```
+
+## Exercise
+
+The results from our assessment are not entirely satisfactory. Some areas remain permanently covered by clouds which leads to data gaps in our final image. As a way to improve the results, repeat the exercise but this time, think about strategies to increase the amount of data. This way, there is a higher chance to find those pixels clear at some point in the time series.
+
+```{r}
+
 ```

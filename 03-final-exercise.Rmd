@@ -8,7 +8,7 @@ In order to start using the package we will need to load the library and set the
 
 library(rsat)
 
-set_credentials("rgistools", "EspacialUPNA88")
+set_credentials("rsat.package", "UpnaSSG.2021")
 
 
 ```
@@ -33,6 +33,7 @@ At this moment we have a variable called `palma` that contains the area we have 
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO conver to sf
 palma <- st_as_sf(palma[[1]])
 
 ```
@@ -43,9 +44,10 @@ Once those paths are defined we can proceed to the creation of the `rtoi` with t
 
 ```{r eval=FALSE, message=FALSE}
 
-set_database("Z:\DATABASE")
-rtoi.path <- file.path(getwd())
+set_database("Z:/DATABASE")
+rtoi.path <- file.path(getwd(), "regions")
 
+#TODO create rtoi
 volcano <- new_rtoi("volcano",
                     palma,
                     rtoi.path)
@@ -60,8 +62,10 @@ The search function, `rsat_search` takes 3 parameters: an `rtoi` object, a produ
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO define time of interest
 toi<-as.Date("2021-09-10")+0:60
 
+#TODO search sentinel-2
 rsat_search(volcano, "S2MSI2A", dates=toi)
 
 ```
@@ -72,10 +76,11 @@ We have created a set of `records` for our area and time of interest, but now we
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO plot preview
 plot(volcano, 
      "preview",
      product="S2MSI2A",
-     dates=toi[0:20])
+     dates=toi[20:60])
 
 ```
 
@@ -85,16 +90,20 @@ Once we have checked the images, for clouds or any other problem, we can choose 
 
 dtes <- as.Date(c("2021-09-20", "2021-09-30", "2021-10-10" ))
 
+#TODO choose records from dtes
 rcds <- records(volcano)
 rcds.f <- rcds[dates(rcds) %in% dtes]
 records(volcano) <- rcds.f
 
+#Check that the dates are correct
+dates(volcano)
 ```
 
 The next step is to download the images corresponding to the `records` that are defined in the `rtoi`. Before starting a download we have to be sure that we have already filtered the needed `records`, since `rsat` will simply try to download everything. `rsat` will first check f the current database folder already contains the files to download, and skip the download for any file that exists.
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO download
 rsat_download(volcano)
 
 ```
@@ -115,6 +124,7 @@ We also have different spatial resolution for the bands, for this example we wil
 bands <- c("B02", "B03", "B04", "B12")
 bands <- paste0(bands, "_60m")
 
+#TODO mosaic
 rsat_mosaic(volcano, bfilter=bands)
 
 ```
@@ -123,6 +133,7 @@ We can check the newly created images with the `plot` function, using the *view*
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO plot
 plot(volcano, 
      "view",
      tm.polygon.region.border.col="red",
@@ -145,6 +156,7 @@ Since we want to see the lava flow of the volcano, we will use the infrared band
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO load raster for band B12_60m
 swir <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B12_60m")
 terra::density(swir)
 
@@ -157,7 +169,7 @@ For this function first we have to set any values that are lower than a threshol
 
 ```{r eval=FALSE, message=FALSE}
 
-threshold <- 10000
+threshold <- 8000
 
 redModified = function(red, swir2){
   swir2[swir2<threshold] = 0
@@ -170,20 +182,24 @@ Once we have the function defined we can call `rsat_derive` to create this new v
 
 ```{r eval=FALSE, message=FALSE}
 
+#TODO derive
 rsat_derive(volcano, 
             product = "S2MSI2A", 
             variable = "redModified", 
             fun = redModified, 
             overwrite = TRUE)
 
+rsat_list_data(volcano)
 ```
 
-Once we have created the new variable, we can use it as any other band. In order to load it we would use the `rsat_get_SpatRaster` function, but instead of using the band name we specify the variable name defined earlier. Remember that we can use `rsat_list_data` to check the available bands. We will also load the blue and green bands to use them together to create an *RGB* image.
+Once we have created the new variable, we can use it as any other band. In order to load it we would use the `rsat_get_SpatRaster` function, but instead of using the band name we specify the variable name defined earlier. Remember that we can use `rsat_list_data` to check the available bands. We will also load the blue (B02_60m) and green (B03_60m) bands to use them together to create an *RGB* image.
 
 ```{r eval=FALSE, message=FALSE}
 
-red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
 green <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B03_60m")
+
+#TODO load red and blue bands
+red <- rsat_get_SpatRaster(volcano, "S2MSI2A", "redModified")
 blue <- rsat_get_SpatRaster(volcano, "S2MSI2A", "B02_60m")
 
 ```
@@ -193,6 +209,7 @@ Finally we will create a variable that contains a `spatRaster` with the three co
 ```{r eval=FALSE, message=FALSE}
 
 rgb<-c(red[[2]], green[[2]], blue[[2]])
+
 terra::plotRGB(terra::stretch(rgb, 0, 255, minq = 0, maxq = 0.80))
 
 ```
